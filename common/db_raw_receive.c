@@ -75,12 +75,12 @@ int setBPF(int newsocket, const uint8_t new_comm_id, uint8_t direction, uint8_t 
                     .len = ARRAY_SIZE(dest_filter),
                     .filter = dest_filter,
             };
-    int ret = setsockopt(newsocket, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof(bpf));
-    if (ret < 0) {
-        perror("DB_RECEIVE: could not attach BPF ");
-        close(newsocket);
-        return -1;
-    }
+//    int ret = setsockopt(newsocket, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof(bpf));
+//    if (ret < 0) {
+//        perror("DB_RECEIVE: could not attach BPF ");
+//        close(newsocket);
+//        return -1;
+//    }
     return newsocket;
 }
 

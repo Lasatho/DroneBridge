@@ -48,6 +48,8 @@ bool volatile keeprunning = true;
 char db_mode, write_to_osdfifo;
 uint8_t comm_id = DEFAULT_V2_COMMID, frame_type;
 int bitrate_op, prox_adhere_80211, num_interfaces;
+int proxy_port;
+int proxy_direction;
 char adapters[DB_MAX_ADAPTERS][IFNAMSIZ];
 char log_path[MAX_PATH_LENGTH];
 uint8_t tel_msg_log_buff[MAVLINK_MAX_PACKET_LEN + sizeof(uint64_t)];
@@ -70,10 +72,12 @@ void process_command_line_args(int argc, char *argv[]) {
     num_interfaces = 0;
     bitrate_op = 1;
     prox_adhere_80211 = 0;
+    proxy_port = APP_PORT_PROXY;
+    proxy_direction = DB_DIREC_DRONE;
     frame_type = DB_FRAMETYPE_DEFAULT;
     strcpy(log_path, DEFAULT_LOG_PATH);
     int c;
-    while ((c = getopt(argc, argv, "n:m:c:b:o:f:a:l:?")) != -1) {
+    while ((c = getopt(argc, argv, "n:m:c:b:o:f:a:l:p:d:?")) != -1) {
         switch (c) {
             case 'n':
                 if (num_interfaces < DB_MAX_ADAPTERS) {
@@ -117,6 +121,12 @@ void process_command_line_args(int argc, char *argv[]) {
                             "\n\t-a [0|1] to disable/enable. Offsets the payload by some bytes so that it sits outside "
                             "then 802.11 header. Set this to 1 if you are using a non DB-Rasp Kernel!");
                 break;
+            case 'p':
+    		proxy_port = (int) strtol(optarg, NULL, 10);
+    		break;
+            case 'd':
+		proxy_direction = (int) strtol(optarg, NULL, 10);
+		break;
             default:
                 abort();
         }
@@ -201,7 +211,7 @@ int main(int argc, char *argv[]) {
     // set up long range sockets
     db_socket_t raw_interfaces[DB_MAX_ADAPTERS] = {0};
     for (int i = 0; i < num_interfaces; ++i) {
-        raw_interfaces[i] = open_db_socket(adapters[i], comm_id, db_mode, bitrate_op, DB_DIREC_DRONE, DB_PORT_PROXY,
+        raw_interfaces[i] = open_db_socket(adapters[i], comm_id, db_mode, bitrate_op, proxy_direction, DB_PORT_PROXY,
                                            frame_type);
     }
     int fifo_osd = -1, new_tcp_client;
@@ -217,7 +227,7 @@ int main(int argc, char *argv[]) {
     size_t recv_length = 0;
 
     // Setup TCP server for GCS communication
-    struct tcp_server_info_t tcp_server_info = create_tcp_server_socket(APP_PORT_PROXY);
+    struct tcp_server_info_t tcp_server_info = create_tcp_server_socket(proxy_port);
     int tcp_addrlen = sizeof(tcp_server_info.servaddr);
 
     // open log file for messages incoming from long range link
